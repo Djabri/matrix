@@ -1,12 +1,11 @@
 #include <cassert>
 #include <iostream>
 #include <fstream>
-#include <string>
 
 #define FILE_PATH_1 "A.txt"
 #define FILE_PATH_2 "B.txt"
+#define FILE_PATH_3 "C.txt"
 #define INPUT_FILE "R.txt"
-
 
 class matrix_t
 {
@@ -17,11 +16,6 @@ private:
 public:
 	matrix_t();
 	matrix_t(const matrix_t&);
-	~matrix_t();
-	
-	int get_rows() const;
-	int get_columns() const;
-
 
 	matrix_t add(matrix_t & other) const;
 	matrix_t sub(matrix_t & other) const;
@@ -102,16 +96,6 @@ public:
 	}
 };
 
-int matrix_t::get_rows() const 
-{
-	return rows;
-}
-
-int matrix_t::get_columns() const 
-{
-	return columns;
-}
-
 matrix_t::matrix_t() : elements(nullptr), rows(0), columns(0)
 {
 
@@ -137,8 +121,9 @@ matrix_t matrix_t::add(matrix_t & other) const
 {
 	matrix_t result;
 	
-	result.elements = new int *[rows];
+	assert(rows == other.rows, columns == other.columns);
 
+	result.elements = new int *[rows];
 	for (unsigned int i = 0; i < rows; i++)
 	{
 		result.elements[i] = new int[columns];
@@ -157,7 +142,7 @@ matrix_t matrix_t::add(matrix_t & other) const
 	}
 	else
 	{
-
+		std::cout << "rows != rows\n";
 	}
 
 	return result;
@@ -165,48 +150,110 @@ matrix_t matrix_t::add(matrix_t & other) const
 
 matrix_t matrix_t::sub(matrix_t & other) const
 {
+	matrix_t result;
 
+	assert(rows == other.rows, columns == other.columns);
+
+	if (rows == other.rows && columns == other.columns)
+	{
+		result.elements = new int *[other.rows];
+		for (unsigned int i = 0; i < other.rows; i++)
+		{
+			result.elements[i] = new int[other.columns];
+		}
+
+		for (unsigned int i = 0; i < other.rows; i++)
+		{
+			for (unsigned int j = 0; j < other.columns; j++)
+			{
+				result.elements[i][j] = elements[i][j] - other.elements[i][j];
+			}
+			std::cout << "\n";
+		}
+
+		result.rows = other.rows;
+		result.columns = other.columns;
+		result.elements = other.elements;
+	}
+	else
+	{
+		std::cout << "An error has occured while reading input data\n";
+	}
+	return result;
 }
 
 matrix_t matrix_t::mul(matrix_t & other) const
 {
+	matrix_t result;
+	
+	assert(rows == other.columns);
 
+	result.elements = new int *[other.rows];
+	for (unsigned int i = 0; i < other.rows; i++)
+	{
+		result.elements[i] = new int[other.columns];
+	}
 
+	for (unsigned int i = 0; i < other.rows; i++)
+	{
+		for (unsigned int j = 0; j < other.columns; j++)
+		{
+
+			result.elements[i][j] = 0;
+			for (unsigned int inner = 0; inner < other.columns; inner++)
+			{
+				result.elements[i][j] += elements[i][inner] * other.elements[inner][j];
+			}
+		}
+	}
+	result.rows = other.rows;
+	result.columns = other.columns;
+
+	return result;
 }
 
 matrix_t matrix_t::trans(matrix_t & other) const
 {
+	matrix_t result;
 
-}
-
-matrix_t::~matrix_t()
-{
-	for (unsigned int i = 0; i < rows; i++)
+	result.elements = new int * [other.rows];
+	for (unsigned int i = 0; i < other.rows; i++)
 	{
-		delete[]elements[i];
+		result.elements[i] = new int[other.columns];
 	}
 
-	delete[]elements;
+	for (unsigned int i = 0; i < other.rows; i++)
+	{
+		for (unsigned int j = 0; j < other.columns; j++)
+		{
+			result.elements[i][j] = other.elements[j][i];
+		}
+	}
+
+	result.rows = other.rows;
+	result.columns = other.columns;
+
+	return result;
 }
 
 int main()
 {
 	std::ifstream fileOne(FILE_PATH_1);
 	std::ifstream fileTwo(FILE_PATH_2);
+	std::ifstream fileThree(FILE_PATH_3);
 	std::ofstream input_file(INPUT_FILE);
 
 
 	matrix_t A;
 	matrix_t B;
-
-	A.read(fileOne);
-	B.read(fileTwo);
+	matrix_t C;
 
 	char check;
 
 	std::cout << "Select an arithmetic operation '+', '-', '*', 'T' \n";
+	std::cin >> check;
 
-	if (A.read(fileOne) && B.read(fileTwo))
+	if (A.read(fileOne) && B.read(fileTwo) && C.read(fileThree))
 	{
 		switch (check)
 		{
@@ -229,7 +276,7 @@ int main()
 
 		case 'T':
 		{
-			A.trans.write(input_file);
+			C.trans(C).write(input_file);
 			break;
 		}
 
@@ -240,8 +287,12 @@ int main()
 	}
 	else
 	{
-		std::cout << "Select an arithmetic operation '+', '-', '*', '/'";
+		std::cout << "An error has occured while reading input data\n";
 	}
+
+	fileOne.close();
+	fileTwo.close();
+	input_file.close();
 
 	std::cin.get();
 	return 0;
